@@ -1,22 +1,38 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 [RequireComponent(typeof(Rigidbody))]
 public class TopDownCharacterController : MonoBehaviour
 {
     [Header("Hareket Ayarları")]
     public float moveSpeed = 5f;
-    public float rotationSpeed = 10f;
-    public bool Focus;
+    public float rotationSpeed = 10f,Jumpforce;
+    private string currentAnimation = "";
+    private bool isJumping = false;
+    private bool isFocusing = false; // örnek flag
     [Header("Mouse ile Dönüş")]
     public Camera mainCamera;
     public LayerMask groundLayer;
-    public enum LookMode { Mouse, MoveDirection }
+    public enum LookMode
+    {
+        Mouse,
+        MoveDirection,
+        Enemy
+    }
+
     public LookMode lookMode = LookMode.MoveDirection;
     private Rigidbody rb;
     private Vector3 moveInput;
     private Animator animator;
-    private string currentAnimation = "";
-
+  
+    public enum CharacterAnimationState
+    {
+        Idle,
+        Run,
+        Jump,
+        Attack
+    }
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -44,23 +60,49 @@ public class TopDownCharacterController : MonoBehaviour
         Vector3 desiredDirection = (camForward * moveZ + camRight * moveX).normalized;
         moveInput = desiredDirection;
 
-        //focusda değilse Bunlar
-        if (moveInput != Vector3.zero)
+        // Eğer focus modundaysa hareket animasyonu oynatma
+        if (!isFocusing)
         {
-           
-
-
-            PlayAnimation("Run");
+            if (Input.GetKeyDown(KeyCode.Space) && !isJumping)
+            {
+                StartCoroutine(HandleJumpAnimation());
+            }
+            else if (!isJumping)
+            {
+                if (moveInput != Vector3.zero)
+                    PlayAnimationState(CharacterAnimationState.Run);
+                else
+                    PlayAnimationState(CharacterAnimationState.Idle);
+            }
         }
-        else
-        {
-            PlayAnimation("Idle");
-        }
+
+        // Dönüş kontrolü
         if (lookMode == LookMode.Mouse)
             RotateTowardsMouse();
         else if (lookMode == LookMode.MoveDirection)
             RotateTowardsMoveDirection();
-        RotateTowardsMouse();
+    }
+    private IEnumerator HandleJumpAnimation()
+    {
+        isJumping = true;
+
+        // Animasyonu oynat
+        PlayAnimationState(CharacterAnimationState.Jump);
+
+        // Yukarı doğru fiziksel zıplama uygula
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // eski y hızını sıfırla
+        rb.AddForce(Vector3.up * Jumpforce, ForceMode.Impulse); // yukarı zıplat
+
+        // Animasyon süresi kadar bekle
+        yield return new WaitForSeconds(0.5f); // Jump animasyon süresine göre ayarla
+
+        // Harekete göre Idle veya Run animasyonuna geç
+        if (moveInput != Vector3.zero)
+            PlayAnimationState(CharacterAnimationState.Run);
+        else
+            PlayAnimationState(CharacterAnimationState.Idle);
+
+        isJumping = false;
     }
 
     void FixedUpdate()
@@ -103,12 +145,14 @@ public class TopDownCharacterController : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(moveInput, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
-    void PlayAnimation(string animationName)
+    private void PlayAnimationState(CharacterAnimationState state)
     {
-        if (currentAnimation == animationName)
+        string animName = state.ToString();
+
+        if (currentAnimation == animName)
             return;
 
-        animator.CrossFade(animationName, 0.1f); // Daha yumuşak geçiş için CrossFade
-        currentAnimation = animationName;
+        animator.CrossFade(animName, 0.1f);
+        currentAnimation = animName;
     }
 }
