@@ -345,6 +345,8 @@ GameObject:
   - component: {fileID: 494759038}
   - component: {fileID: 494759037}
   - component: {fileID: 494759036}
+  - component: {fileID: 494759040}
+  - component: {fileID: 494759041}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
@@ -434,12 +436,57 @@ Transform:
   m_GameObject: {fileID: 494759035}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 62.9, y: 10.7, z: 85.7}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 62.1, y: 12.67, z: 73.4}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &494759040
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494759035}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 112
+  m_CollisionDetection: 0
+--- !u!114 &494759041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494759035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d43b765c5dbdb40bc48f469e6505fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 5
+  rotationSpeed: 10
+  mainCamera: {fileID: 1424186259}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1424186257
 GameObject:
   m_ObjectHideFlags: 0
@@ -452,6 +499,7 @@ GameObject:
   - component: {fileID: 1424186259}
   - component: {fileID: 1424186258}
   - component: {fileID: 1424186261}
+  - component: {fileID: 1424186262}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -526,13 +574,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1424186257}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27156836, y: 0.12678045, z: -0.036114346, w: 0.9533484}
-  m_LocalPosition: {x: 58.8, y: 24.8, z: 68.6}
+  m_LocalRotation: {x: 0.21525392, y: 0.102050714, z: -0.022624096, w: 0.9709478}
+  m_LocalPosition: {x: 57.9, y: 30.7, z: 65}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 31.8, y: 15.15, z: 0}
+  m_LocalEulerAnglesHint: {x: 25, y: 12, z: 0}
 --- !u!114 &1424186261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -577,11 +625,27 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &1424186262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1424186257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8afb0a642fb3b5f4e9b61b38ef7c1f89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 494759039}
+  rotateSpeed: 5
+  scrollSensitivity: 5
+  offsetYRange: 6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1424186260}
   - {fileID: 262879021}
   - {fileID: 364031501}
+  - {fileID: 1424186260}
   - {fileID: 494759039}
