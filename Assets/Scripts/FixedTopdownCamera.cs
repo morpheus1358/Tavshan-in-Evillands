@@ -10,9 +10,13 @@ public class FixedTopDownCamera : MonoBehaviour
     public float scrollSensitivity = 250f;
     public float offsetYRange = 6f;
 
+    [Header("Pitch Açısı Sınırı")]
+    public float minPitch = 10f;  // En fazla aşağı bakış
+    public float maxPitch = 80f;  // En fazla yukarı bakış
+
     private Vector3 initialOffset;    // Başlangıç offset
     private float yaw;                // Mevcut yaw
-    private float pitch;              // Başlangıç pitch (x rotasyon)
+    private float pitch;              // Mevcut pitch (x rotasyon)
     private float offsetYDelta = 0f;  // Scroll ile Y değişimi
     private float distanceToTarget;   // Gerçek 3D mesafe
 
@@ -39,14 +43,20 @@ public class FixedTopDownCamera : MonoBehaviour
 
     void LateUpdate()
     {
-        // Sağ tıkla döndürme
+        // Sağ tıkla döndürme (yaw ve pitch)
         if (Input.GetMouseButton(1))
         {
             float mouseX = Input.GetAxis("Mouse X");
+            float mouseY = Input.GetAxis("Mouse Y");
+
             yaw += mouseX * rotateSpeed;
+
+            // Yukarı-aşağı bakış (ters eksen isteyenler için -mouseY)
+            pitch -= mouseY * rotateSpeed;
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
         }
 
-        // Scroll ile yükseklik ayarı
+        // Scroll ile yükseklik/zoom ayarı
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) > 0.01f)
         {
@@ -70,4 +80,5 @@ public class FixedTopDownCamera : MonoBehaviour
         // Her zaman karaktere bak
         transform.LookAt(target.position);
     }
+
 }
