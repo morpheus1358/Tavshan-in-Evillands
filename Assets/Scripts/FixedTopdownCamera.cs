@@ -8,7 +8,7 @@ public class FixedTopDownCamera : MonoBehaviour
     [Header("Ayarlar")]
     public float rotateSpeed = 5f;
     public float scrollSensitivity = 250f;
-    public float offsetYRange = 6f;
+    public float offsetYRange = 25f;
 
     [Header("Pitch Açısı Sınırı")]
     public float minPitch = 10f;  // En fazla aşağı bakış
