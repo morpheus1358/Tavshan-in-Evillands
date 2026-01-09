@@ -151,8 +151,8 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 1
+  m_Color: {r: 0.45412073, g: 0.5483272, b: 0.6132076, a: 1}
+  m_Intensity: 2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -292,8 +292,8 @@ Terrain:
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
   m_TreeMaximumFullLODCount: 50
-  m_DetailObjectDistance: 80
-  m_DetailObjectDensity: 0.35
+  m_DetailObjectDistance: 160
+  m_DetailObjectDensity: 0.3
   m_HeightmapPixelError: 5
   m_SplatMapDistance: 1000
   m_HeightmapMinimumLODSimplification: 0
@@ -524,7 +524,7 @@ Camera:
   m_GameObject: {fileID: 1424186257}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -575,7 +575,7 @@ Transform:
   m_GameObject: {fileID: 1424186257}
   serializedVersion: 2
   m_LocalRotation: {x: 0.21525392, y: 0.102050714, z: -0.022624096, w: 0.9709478}
-  m_LocalPosition: {x: 57.9, y: 30.7, z: 65}
+  m_LocalPosition: {x: 59.37, y: 38.18, z: 71.93}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -640,7 +640,7 @@ MonoBehaviour:
   target: {fileID: 494759039}
   rotateSpeed: 5
   scrollSensitivity: 5
-  offsetYRange: 6
+  offsetYRange: 25
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
