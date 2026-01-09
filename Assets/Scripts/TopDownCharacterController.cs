@@ -11,6 +11,7 @@ public class TopDownCharacterController : MonoBehaviour
     private string currentAnimation = "";
     private bool isJumping = false;
     private bool isFocusing = false; // örnek flag
+    
     [Header("Mouse ile Dönüş")]
     public Camera mainCamera;
     public LayerMask groundLayer;
