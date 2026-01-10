@@ -659,7 +659,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1811293489}
   serializedVersion: 4
-  m_Mass: 2
+  m_Mass: 1
   m_Drag: 1
   m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -715,7 +715,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 15
   rotationSpeed: 10
-  Jumpforce: 15
+  Jumpforce: 25
   mainCamera: {fileID: 1424186259}
   groundLayer:
     serializedVersion: 2
