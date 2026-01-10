@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -14,11 +15,23 @@ public class TopDownCharacterController : MonoBehaviour
     public LayerMask groundLayer;
     public GameObject SwordActive, NoActiveSword;
 
+    [Header("Camera Lock-On")]
+    public FixedTopDownCamera cameraLock;
+
+    [Header("Lock-On (TAG + Radius)")]
+    public string enemyTag = "Enemy";
+    public float lockOnRadius = 12f;
+    public KeyCode lockOnKey = KeyCode.E;
+    public bool autoUnlockIfOutOfRange = true;
+
+    public bool isLockedOn = false;
+    public Transform lockedTarget;
+
     [Header("Combat Timings")]
-    public float slash1Duration = 0.6f;   // Slash süresi
-    public float slash2Duration = 0.7f;   // Slash2 süresi
-    public float comboWindow = 0.8f;      // Slash1 sonrası Slash2 için süre
-    public float focusKeepTime = 1.2f;    // Son vuruştan sonra focus'ta kalma
+    public float slash1Duration = 0.6f;
+    public float slash2Duration = 0.7f;
+    public float comboWindow = 0.8f;
+    public float focusKeepTime = 1.2f;
 
     public enum LookMode { Mouse, MoveDirection, Enemy }
     public LookMode lookMode = LookMode.MoveDirection;
@@ -40,6 +53,9 @@ public class TopDownCharacterController : MonoBehaviour
     float comboTimer = 0f;        // Slash2 penceresi
     bool queuedSlash2 = false;    // Slash1 sırasında tık gelirse kuyruğa al
 
+    // Yakındaki enemy listesi (tag ile filtre)
+    readonly List<Transform> nearbyEnemies = new();
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -53,7 +69,28 @@ public class TopDownCharacterController : MonoBehaviour
     {
         ReadMoveInput();
 
-        // Combo penceresi sayacı (Slash1 bittikten sonra çalışır)
+        // E ile Lock-on toggle
+        if (Input.GetKeyDown(lockOnKey))
+        {
+            if (isLockedOn) Unlock();
+            else LockOnNearestEnemyByTag();
+        }
+
+        // Lock-on açıkken karakteri hedefe çevir (sadece Y rotasyon)
+        if (isLockedOn && lockedTarget != null)
+            RotateYawTowardsTarget(lockedTarget);
+
+        // Hedef uzaklaştıysa bırak
+        if (isLockedOn && autoUnlockIfOutOfRange)
+        {
+            if (lockedTarget == null ||
+                (lockedTarget.position - transform.position).sqrMagnitude > lockOnRadius * lockOnRadius)
+            {
+                Unlock();
+            }
+        }
+
+        // Combo penceresi
         if (comboStep == 1 && !isAttacking)
         {
             comboTimer -= Time.deltaTime;
@@ -64,8 +101,8 @@ public class TopDownCharacterController : MonoBehaviour
             }
         }
 
-        // Focus timer (attack yokken akar)
-        if (isInFocus && !isAttacking)
+        // Focus timer: lock-on yokken süre dolunca focus kapanabilir
+        if (isInFocus && !isAttacking && !isLockedOn)
         {
             focusTimer -= Time.deltaTime;
             if (focusTimer <= 0f)
@@ -84,14 +121,17 @@ public class TopDownCharacterController : MonoBehaviour
         if (!isAttacking && !isJumping)
             UpdateLocomotionAnimation();
 
-        // Rotate (istersen attack sırasında da dönebilsin)
-        if (lookMode == LookMode.Mouse) RotateTowardsMouse();
-        else if (lookMode == LookMode.MoveDirection) RotateTowardsMoveDirection();
+        // Rotate: lock-on kapalıyken serbest dönüş
+        if (!isLockedOn)
+        {
+            if (lookMode == LookMode.Mouse) RotateTowardsMouse();
+            else if (lookMode == LookMode.MoveDirection) RotateTowardsMoveDirection();
+        }
     }
 
     void FixedUpdate()
     {
-        // Vuruş anında HAREKET YOK
+        // Saldırı anında hareket yok
         if (isAttacking) return;
 
         rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime);
@@ -105,28 +145,127 @@ public class TopDownCharacterController : MonoBehaviour
         Vector3 camForward = mainCamera.transform.forward;
         Vector3 camRight = mainCamera.transform.right;
 
-        camForward.y = 0f; camRight.y = 0f;
-        camForward.Normalize(); camRight.Normalize();
+        camForward.y = 0f;
+        camRight.y = 0f;
+
+        camForward.Normalize();
+        camRight.Normalize();
 
         moveInput = (camForward * moveZ + camRight * moveX).normalized;
     }
+
+    // -------------------- LOCK ON (TAG) --------------------
+
+    void LockOnNearestEnemyByTag()
+    {
+        CollectNearbyEnemiesByTag();
+
+        if (nearbyEnemies.Count == 0)
+            return;
+
+        Transform nearest = GetNearest(nearbyEnemies);
+        if (nearest == null)
+            return;
+
+        LockOn(nearest);
+    }
+
+    void CollectNearbyEnemiesByTag()
+    {
+        nearbyEnemies.Clear();
+
+        // Yarıçap içinde tüm collider’ları al
+        Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRadius);
+
+        if (hits == null || hits.Length == 0) return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i] == null) continue;
+
+            // Tag filtre
+            if (!hits[i].CompareTag(enemyTag)) continue;
+
+            // Aynı enemy’de birden fazla collider varsa duplicate olabilir
+            Transform t = hits[i].transform;
+            if (!nearbyEnemies.Contains(t))
+                nearbyEnemies.Add(t);
+        }
+    }
+
+    Transform GetNearest(List<Transform> list)
+    {
+        Transform best = null;
+        float bestDist = float.MaxValue;
+        Vector3 myPos = transform.position;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            Transform t = list[i];
+            if (t == null) continue;
+
+            float d = (t.position - myPos).sqrMagnitude;
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = t;
+            }
+        }
+        return best;
+    }
+
+    public void LockOn(Transform target)
+    {
+        if (target == null) return;
+
+        lockedTarget = target;
+        isLockedOn = true;
+
+        // Lock-on olunca focus kesin açık kalsın
+        EnterFocusForAWhile();
+
+        // Kameraya hedefi yolla
+        if (cameraLock != null)
+            cameraLock.SetLockOnTarget(lockedTarget);
+    }
+
+    public void Unlock()
+    {
+        isLockedOn = false;
+        lockedTarget = null;
+
+        if (cameraLock != null)
+            cameraLock.ClearLockOn();
+
+        // Lock-on bittiğinde focus hemen kapanmasın; süreye bırak
+        focusTimer = focusKeepTime;
+    }
+
+    void RotateYawTowardsTarget(Transform target)
+    {
+        Vector3 dir = target.position - transform.position;
+        dir.y = 0f; // sadece yaw
+        if (dir.sqrMagnitude < 0.001f) return;
+
+        Quaternion targetRot = Quaternion.LookRotation(dir.normalized, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+    }
+
+    // -------------------- COMBAT / COMBO --------------------
 
     void TryAttack()
     {
         // Attack sırasında 2. vuruşu kuyrukla
         if (isAttacking)
         {
-            // Slash1 oynarken gelen tık -> Slash2 kuyruğa
             if (comboStep == 0)
                 queuedSlash2 = true;
-
             return;
         }
 
         // Her vuruşta focus aç/süre tazele
         EnterFocusForAWhile();
 
-        // Eğer Slash2 penceresindeysek direkt Slash2
         if (comboStep == 1 && comboTimer > 0f)
         {
             StopCoroutine(nameof(AttackRoutine));
@@ -134,7 +273,6 @@ public class TopDownCharacterController : MonoBehaviour
         }
         else
         {
-            // Slash1
             StopCoroutine(nameof(AttackRoutine));
             StartCoroutine(AttackRoutine("Slash", slash1Duration, endsCombo: false));
         }
@@ -152,11 +290,9 @@ public class TopDownCharacterController : MonoBehaviour
 
         if (!endsCombo)
         {
-            // Slash1 bitti -> Slash2 penceresi aç
             comboStep = 1;
             comboTimer = comboWindow;
 
-            // Slash1 sırasında tıklanmışsa Slash2'yi hemen bas
             if (queuedSlash2)
             {
                 queuedSlash2 = false;
@@ -168,7 +304,6 @@ public class TopDownCharacterController : MonoBehaviour
         }
         else
         {
-            // Slash2 bitti -> combo sıfır
             comboStep = 0;
             comboTimer = 0f;
             queuedSlash2 = false;
@@ -178,11 +313,14 @@ public class TopDownCharacterController : MonoBehaviour
             UpdateLocomotionAnimation();
     }
 
+    // -------------------- JUMP --------------------
+
     IEnumerator JumpRoutine()
     {
         isJumping = true;
 
-        Play(isInFocus ? "jumpFocus" : "Jump");
+        // ✅ LockOn kapalıysa normal Jump
+        Play(isLockedOn ? "jumpFocus" : "Jump");
 
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -195,37 +333,45 @@ public class TopDownCharacterController : MonoBehaviour
             UpdateLocomotionAnimation();
     }
 
+    // -------------------- LOCOMOTION --------------------
+
     void UpdateLocomotionAnimation()
     {
-        if (moveInput == Vector3.zero)
+        // ✅ LockOn kapalıysa: eski davranış (focus animleri YOK)
+        if (!isLockedOn)
         {
-            Play(isInFocus ? "IdleFocus" : "Idle");
+            if (moveInput == Vector3.zero) Play("Idle");
+            else Play("Run");
             return;
         }
 
-        if (!isInFocus)
+        // ✅ LockOn açıksa: focus animleri kullan
+        if (moveInput == Vector3.zero)
         {
-            Play("Run");
+            Play("IdleFocus");
             return;
         }
 
         Vector3 localMove = transform.InverseTransformDirection(moveInput);
 
         if (localMove.z < -0.2f) Play("BackwardRunFocus");
-        else if (localMove.x > 0.35f) Play("RightRunFocus");
-        else if (localMove.x < -0.35f) Play("LeftRunFocus");
+        else if (localMove.x > 0.5f) Play("RightRunFocus");
+        else if (localMove.x < -0.5f) Play("LeftRunFocus");
         else Play("RunFocus");
     }
 
     void EnterFocusForAWhile()
     {
         isInFocus = true;
-        focusTimer = focusKeepTime; // her vuruşta yenilenir
+        focusTimer = focusKeepTime;
         SetSwordVisual(true);
     }
 
     void ExitFocus()
     {
+        // lock-on varsa focus kapanmasın (senin istediğin “full focus”)
+        if (isLockedOn) return;
+
         isInFocus = false;
         focusTimer = 0f;
         SetSwordVisual(false);
@@ -233,6 +379,8 @@ public class TopDownCharacterController : MonoBehaviour
         if (!isAttacking && !isJumping)
             UpdateLocomotionAnimation();
     }
+
+    // -------------------- VISUAL / ANIM --------------------
 
     void SetSwordVisual(bool swordOn)
     {
@@ -246,6 +394,8 @@ public class TopDownCharacterController : MonoBehaviour
         animator.CrossFade(animName, 0.1f);
         currentAnimation = animName;
     }
+
+    // -------------------- FREE ROTATION --------------------
 
     void RotateTowardsMouse()
     {
@@ -264,7 +414,15 @@ public class TopDownCharacterController : MonoBehaviour
     void RotateTowardsMoveDirection()
     {
         if (moveInput == Vector3.zero) return;
+
         Quaternion targetRot = Quaternion.LookRotation(moveInput, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+    }
+
+    // -------------------- DEBUG --------------------
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lockOnRadius);
     }
 }

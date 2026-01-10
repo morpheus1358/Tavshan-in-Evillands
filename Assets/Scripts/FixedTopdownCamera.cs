@@ -11,14 +11,21 @@ public class FixedTopDownCamera : MonoBehaviour
     public float offsetYRange = 25f;
 
     [Header("Pitch Açısı Sınırı")]
-    public float minPitch = 10f;  // En fazla aşağı bakış
-    public float maxPitch = 80f;  // En fazla yukarı bakış
+    public float minPitch = 10f;
+    public float maxPitch = 80f;
 
-    private Vector3 initialOffset;    // Başlangıç offset
-    private float yaw;                // Mevcut yaw
-    private float pitch;              // Mevcut pitch (x rotasyon)
-    private float offsetYDelta = 0f;  // Scroll ile Y değişimi
-    private float distanceToTarget;   // Gerçek 3D mesafe
+    [Header("Lock-On")]
+    public bool lockOnActive = false;
+    public Transform lockOnTarget;            // düşman
+    public float lockOnRotateSpeed = 10f;     // lock-on'da kameranın dönme hızı
+    public float lockOnPitch = 35f;           // lock-on'da sabit pitch istersen
+    public bool useFixedLockOnPitch = false;  // true olursa pitch sabitlenir
+
+    private Vector3 initialOffset;
+    private float yaw;
+    private float pitch;
+    private float offsetYDelta = 0f;
+    private float distanceToTarget;
 
     void Start()
     {
@@ -29,21 +36,37 @@ public class FixedTopDownCamera : MonoBehaviour
             return;
         }
 
-        // Kameranın hedefe göre olan başlangıç pozisyon farkı
         initialOffset = transform.position - target.position;
 
-        // Sahnedeki kamera açısını al
         Vector3 angles = transform.eulerAngles;
         pitch = angles.x;
         yaw = angles.y;
 
-        // Gerçek 3D mesafe
         distanceToTarget = initialOffset.magnitude;
     }
 
     void LateUpdate()
     {
-        // Sağ tıkla döndürme (yaw ve pitch)
+        // Scroll her zaman çalışsın (lock-on'da da zoom olsun)
+        HandleScroll();
+
+        if (!lockOnActive || lockOnTarget == null)
+        {
+            // NORMAL MOD: sağ tıkla kamera kontrolü
+            HandleFreeLook();
+        }
+        else
+        {
+            // LOCK-ON MOD: kamera düşmana bakacak şekilde yaw/pitch ayarla
+            HandleLockOnLook();
+        }
+
+        // Kamera pozisyonunu aynı sistemle hesapla
+        ApplyCameraTransform();
+    }
+
+    void HandleFreeLook()
+    {
         if (Input.GetMouseButton(1))
         {
             float mouseX = Input.GetAxis("Mouse X");
@@ -51,34 +74,81 @@ public class FixedTopDownCamera : MonoBehaviour
 
             yaw += mouseX * rotateSpeed;
 
-            // Yukarı-aşağı bakış (ters eksen isteyenler için -mouseY)
             pitch -= mouseY * rotateSpeed;
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
         }
+    }
 
-        // Scroll ile yükseklik/zoom ayarı
+    void HandleLockOnLook()
+    {
+        // target -> düşman yönü
+        Vector3 dir = lockOnTarget.position - target.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f) return;
+
+        // hedef yaw
+        float targetYaw = Quaternion.LookRotation(dir.normalized, Vector3.up).eulerAngles.y;
+
+        // yaw'ı yumuşak döndür
+        yaw = Mathf.LerpAngle(yaw, targetYaw, lockOnRotateSpeed * Time.deltaTime);
+
+        // pitch sabit istersen
+        if (useFixedLockOnPitch)
+        {
+            pitch = Mathf.Lerp(pitch, lockOnPitch, lockOnRotateSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // sabit değilse yine clamp içinde bırak
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        }
+    }
+
+    void HandleScroll()
+    {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) > 0.01f)
         {
             offsetYDelta -= scroll * Time.deltaTime * scrollSensitivity;
             offsetYDelta = Mathf.Clamp(offsetYDelta, -offsetYRange, offsetYRange);
         }
+    }
 
-        // Yeni rotasyon
+    void ApplyCameraTransform()
+    {
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
 
-        // Güncellenmiş mesafe (yükseklik dahil)
         float currentDistance = distanceToTarget + offsetYDelta;
 
-        // Kameranın yeni pozisyonu = hedefin etrafında dönen nokta
         Vector3 offset = rotation * new Vector3(0f, 0f, -currentDistance);
         Vector3 desiredPosition = target.position + offset;
 
-        // Kamerayı konumlandır
         transform.position = desiredPosition;
 
-        // Her zaman karaktere bak
-        transform.LookAt(target.position);
+        // Lock-on'da ister karaktere ister düşmana bak:
+        if (lockOnActive && lockOnTarget != null)
+        {
+            // İstersen ortalama noktaya bak (daha sinematik)
+            Vector3 mid = (target.position + lockOnTarget.position) * 0.5f;
+            transform.LookAt(mid);
+        }
+        else
+        {
+            transform.LookAt(target.position);
+        }
     }
 
+    // --- DIŞARIDAN ÇAĞRILACAK API ---
+    public void SetLockOnTarget(Transform enemy)
+    {
+        lockOnTarget = enemy;
+        lockOnActive = (enemy != null);
+    }
+
+    public void ClearLockOn()
+    {
+        lockOnTarget = null;
+        lockOnActive = false;
+    }
 }
