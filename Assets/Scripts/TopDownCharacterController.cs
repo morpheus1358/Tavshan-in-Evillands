@@ -280,30 +280,40 @@ public class TopDownCharacterController : MonoBehaviour
 
     IEnumerator AttackRoutine(string animName, float duration, bool endsCombo)
     {
+        // Attack lock
         isAttacking = true;
+
+        // Souls hissi: input hareketi yok + kayma yok
+        rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        rb.angularVelocity = Vector3.zero;
 
         Play(animName);
 
         yield return new WaitForSeconds(duration);
 
+        // Attack bitti
         isAttacking = false;
 
         if (!endsCombo)
         {
+            // Slash1 bitti -> Slash2 penceresi
             comboStep = 1;
             comboTimer = comboWindow;
 
+            // Slash1 sırasında tıklandıysa Slash2'ye zincirle (aynı coroutine içinde)
             if (queuedSlash2)
             {
                 queuedSlash2 = false;
                 EnterFocusForAWhile();
-                StopCoroutine(nameof(AttackRoutine));
-                StartCoroutine(AttackRoutine("Slash2", slash2Duration, endsCombo: true));
+
+                // Slash2'yi direkt burada çalıştır
+                yield return StartCoroutine(AttackRoutine("Slash2", slash2Duration, endsCombo: true));
                 yield break;
             }
         }
         else
         {
+            // Slash2 bitti -> combo sıfır
             comboStep = 0;
             comboTimer = 0f;
             queuedSlash2 = false;

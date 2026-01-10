@@ -13,7 +13,11 @@ public class FixedTopDownCamera : MonoBehaviour
     [Header("Pitch Açısı Sınırı")]
     public float minPitch = 10f;
     public float maxPitch = 80f;
-
+    [Header("Lock-On Pitch Control")]
+    public bool allowPitchInLockOn = true;
+    public float lockOnPitchSensitivity = 2.5f;
+    public float lockOnPitchCenter = 35f;      // lock-on varsayılan pitch
+    public float lockOnPitchRange = 12f;       // +/- kaç derece oynayabilsin
     [Header("Lock-On")]
     public bool lockOnActive = false;
     public Transform lockOnTarget;            // düşman
@@ -81,27 +85,36 @@ public class FixedTopDownCamera : MonoBehaviour
 
     void HandleLockOnLook()
     {
-        // target -> düşman yönü
+        // target -> düşman yönü (yaw için)
         Vector3 dir = lockOnTarget.position - target.position;
         dir.y = 0f;
 
         if (dir.sqrMagnitude < 0.001f) return;
 
-        // hedef yaw
+        // ✅ YAW: sağa-sola kilit -> düşmana döner
         float targetYaw = Quaternion.LookRotation(dir.normalized, Vector3.up).eulerAngles.y;
-
-        // yaw'ı yumuşak döndür
         yaw = Mathf.LerpAngle(yaw, targetYaw, lockOnRotateSpeed * Time.deltaTime);
 
-        // pitch sabit istersen
-        if (useFixedLockOnPitch)
+        // ✅ PITCH: sadece sağ tık basılıyken yukarı-aşağı oynat
+        if (allowPitchInLockOn && Input.GetMouseButton(1))
         {
-            pitch = Mathf.Lerp(pitch, lockOnPitch, lockOnRotateSpeed * Time.deltaTime);
+            float mouseY = Input.GetAxis("Mouse Y");
+
+            pitch -= mouseY * lockOnPitchSensitivity;
+
+            float minLockPitch = lockOnPitchCenter - lockOnPitchRange;
+            float maxLockPitch = lockOnPitchCenter + lockOnPitchRange;
+
+            pitch = Mathf.Clamp(
+                pitch,
+                Mathf.Max(minPitch, minLockPitch),
+                Mathf.Min(maxPitch, maxLockPitch)
+            );
         }
         else
         {
-            // sabit değilse yine clamp içinde bırak
-            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+            // Sağ tık yokken: istersen merkeze yumuşak dönsün
+            pitch = Mathf.Lerp(pitch, lockOnPitchCenter, lockOnRotateSpeed * Time.deltaTime);
         }
     }
 
