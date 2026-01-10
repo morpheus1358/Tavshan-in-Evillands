@@ -329,8 +329,7 @@ public class TopDownCharacterController : MonoBehaviour
     {
         isJumping = true;
 
-        // ✅ LockOn kapalıysa normal Jump
-        Play(isLockedOn ? "jumpFocus" : "Jump");
+        Play(isInFocus ? "jumpFocus" : "Jump");
 
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -347,15 +346,21 @@ public class TopDownCharacterController : MonoBehaviour
 
     void UpdateLocomotionAnimation()
     {
-        // ✅ LockOn kapalıysa: eski davranış (focus animleri YOK)
-        if (!isLockedOn)
+        // Focus kapalıysa: düz animler
+        if (!isInFocus)
         {
-            if (moveInput == Vector3.zero) Play("Idle");
-            else Play("Run");
+            Play(moveInput == Vector3.zero ? "Idle" : "Run");
             return;
         }
 
-        // ✅ LockOn açıksa: focus animleri kullan
+        // Focus açık + LockOn kapalıysa: SADECE RunFocus/IdleFocus
+        if (!isLockedOn)
+        {
+            Play(moveInput == Vector3.zero ? "IdleFocus" : "RunFocus");
+            return;
+        }
+
+        // Focus açık + LockOn açıksa: yönlü focus koşular
         if (moveInput == Vector3.zero)
         {
             Play("IdleFocus");
