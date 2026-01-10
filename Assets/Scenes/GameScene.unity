@@ -980,13 +980,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 15
   rotationSpeed: 10
-  Jumpforce: 25
-  SwordActive: {fileID: 316485897}
-  NoActiveSword: {fileID: 1799075738}
+  jumpForce: 25
   mainCamera: {fileID: 1424186259}
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
+  SwordActive: {fileID: 316485897}
+  NoActiveSword: {fileID: 1799075738}
+  slash1Duration: 1.3
+  slash2Duration: 1.3
+  comboWindow: 0.8
+  focusKeepTime: 4
   lookMode: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
