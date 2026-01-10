@@ -11,6 +11,8 @@ public class TopDownCharacterController : MonoBehaviour
     private string currentAnimation = "";
     private bool isJumping = false;
     private bool isFocusing = false; // örnek flag
+    // burada Saldırı Düşmana focus iken Swordactive Aktif edilecek objesi No activesword kapalı olacak şeklinde ayarlanabilir
+    public GameObject SwordActive, NoActiveSword;
 
     [Header("Mouse ile Dönüş")]
     public Camera mainCamera;
