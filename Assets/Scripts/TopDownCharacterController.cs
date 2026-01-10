@@ -7,10 +7,11 @@ public class TopDownCharacterController : MonoBehaviour
 {
     [Header("Hareket Ayarları")]
     public float moveSpeed = 5f;
-    public float rotationSpeed = 10f,Jumpforce;
+    public float rotationSpeed = 10f, Jumpforce;
     private string currentAnimation = "";
     private bool isJumping = false;
     private bool isFocusing = false; // örnek flag
+
     [Header("Mouse ile Dönüş")]
     public Camera mainCamera;
     public LayerMask groundLayer;
@@ -25,7 +26,7 @@ public class TopDownCharacterController : MonoBehaviour
     private Rigidbody rb;
     private Vector3 moveInput;
     private Animator animator;
-  
+
     public enum CharacterAnimationState
     {
         Idle,
@@ -94,7 +95,7 @@ public class TopDownCharacterController : MonoBehaviour
         rb.AddForce(Vector3.up * Jumpforce, ForceMode.Impulse); // yukarı zıplat
 
         // Animasyon süresi kadar bekle
-        yield return new WaitForSeconds(0.5f); // Jump animasyon süresine göre ayarla
+        yield return new WaitForSeconds(1.25f);
 
         // Harekete göre Idle veya Run animasyonuna geç
         if (moveInput != Vector3.zero)
