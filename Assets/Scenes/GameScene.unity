@@ -1353,11 +1353,11 @@ MonoBehaviour:
   scrollSensitivity: 5
   offsetYRange: 25
   minPitch: 10
-  maxPitch: 80
+  maxPitch: 90
   allowPitchInLockOn: 1
   lockOnPitchSensitivity: 2.5
   lockOnPitchCenter: 35
-  lockOnPitchRange: 12
+  lockOnPitchRange: 60
   lockOnActive: 0
   lockOnTarget: {fileID: 0}
   lockOnRotateSpeed: 10

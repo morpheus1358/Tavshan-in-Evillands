@@ -17,7 +17,7 @@ public class FixedTopDownCamera : MonoBehaviour
     public bool allowPitchInLockOn = true;
     public float lockOnPitchSensitivity = 2.5f;
     public float lockOnPitchCenter = 35f;      // lock-on varsayılan pitch
-    public float lockOnPitchRange = 12f;       // +/- kaç derece oynayabilsin
+    public float lockOnPitchRange = 20f;       // +/- kaç derece oynayabilsin
     [Header("Lock-On")]
     public bool lockOnActive = false;
     public Transform lockOnTarget;            // düşman
