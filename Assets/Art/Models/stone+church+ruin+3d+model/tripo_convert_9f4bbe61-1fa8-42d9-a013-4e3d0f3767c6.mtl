@@ -1,0 +1,12 @@
+# Blender 4.5.0 MTL File: 'None'
+# www.blender.org
+
+newmtl tripo_mat_9f4bbe61-1fa8-42d9-a013-4e3d0f3767c6
+Ns 10.000005
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd stonechurchruin3dmodel_basecolor.JPEG
