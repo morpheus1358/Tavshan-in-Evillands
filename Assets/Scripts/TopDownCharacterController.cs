@@ -23,7 +23,7 @@ public class TopDownCharacterController : MonoBehaviour
     [Header("SFX")]
 
     public AudioSource audioSource;
-    public AudioClip rollSFX, jumpSFX, walkSFX, attackSFX;
+    public AudioClip rollSFX, jumpSFX, walkSFX, attackSFX1, attackSFX2;
 
 
     [Header("Refs")]
@@ -302,11 +302,13 @@ public class TopDownCharacterController : MonoBehaviour
         if (comboStep == 1 && comboTimer > 0f)
         {
             StopCoroutine(nameof(AttackRoutine));
+            audioSource.PlayOneShot(attackSFX2);
             StartCoroutine(AttackRoutine("Slash2", slash2Duration, endsCombo: true));
         }
         else
         {
             StopCoroutine(nameof(AttackRoutine));
+            audioSource.PlayOneShot(attackSFX1);
             StartCoroutine(AttackRoutine("Slash", slash1Duration, endsCombo: false));
         }
     }
@@ -340,6 +342,7 @@ public class TopDownCharacterController : MonoBehaviour
                 EnterFocusForAWhile();
 
                 // Slash2'yi direkt burada çalıştır
+                audioSource.PlayOneShot(attackSFX2);
                 yield return StartCoroutine(AttackRoutine("Slash2", slash2Duration, endsCombo: true));
                 yield break;
             }
