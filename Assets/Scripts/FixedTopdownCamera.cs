@@ -5,6 +5,12 @@ public class FixedTopDownCamera : MonoBehaviour
     [Header("Takip edilecek obje")]
     public Transform target;
 
+    [Header("Camera Shake")]
+    public float shakeStrength = 0.15f;
+    float shakeTime = 0f;
+    float shakeDuration = 0f;
+    float currentShakeStrength = 0f;
+
     [Header("Ayarlar")]
     public float rotateSpeed = 5f;
     public float scrollSensitivity = 250f;
@@ -118,6 +124,13 @@ public class FixedTopDownCamera : MonoBehaviour
         }
     }
 
+    public void Shake(float duration, float strength)
+    {
+        shakeDuration = duration;
+        shakeTime = duration;
+        currentShakeStrength = strength;
+    }
+
     void HandleScroll()
     {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -136,6 +149,18 @@ public class FixedTopDownCamera : MonoBehaviour
 
         Vector3 offset = rotation * new Vector3(0f, 0f, -currentDistance);
         Vector3 desiredPosition = target.position + offset;
+
+        // --- SHAKE (applied after camera math, so it won't be overwritten) ---
+        if (shakeTime > 0f)
+        {
+            Vector3 shakeOffset = Random.insideUnitSphere * currentShakeStrength;
+            shakeOffset.z = 0f; // don't mess zoom too much
+            desiredPosition += shakeOffset;
+
+            shakeTime -= Time.deltaTime;
+            if (shakeTime <= 0f)
+                currentShakeStrength = 0f;
+        }
 
         transform.position = desiredPosition;
 

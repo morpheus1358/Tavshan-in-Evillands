@@ -16,17 +16,15 @@ public class TopDownCharacterController : MonoBehaviour
     public float rollSpeed = 9f;
     public float rollCooldown = 0.6f;
     public string rollAnimName = "Roll"; // <-- Animator state name
+    public FixedTopDownCamera cam;
+    public float rollShakeDuration = 0.15f;
+    public float rollShakeStrength = 0.12f;
 
 
     [Header("Refs")]
     public Camera mainCamera;
     public LayerMask groundLayer;
     public GameObject SwordActive, NoActiveSword;
-
-    [Header("Camera Shake")]
-    public CameraShake cameraShake;
-    public float rollShakeDuration = 0.18f;
-    public float rollShakeStrength = 0.15f;
 
     [Header("Camera Lock-On")]
     public FixedTopDownCamera cameraLock;
@@ -81,8 +79,7 @@ public class TopDownCharacterController : MonoBehaviour
 
         SetSwordVisual(false);
 
-        if (cameraShake == null && mainCamera != null)
-            cameraShake = mainCamera.GetComponent<CameraShake>();
+        if (cam == null) cam = FindObjectOfType<FixedTopDownCamera>();
 
     }
 
@@ -397,9 +394,8 @@ public class TopDownCharacterController : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         Play("Roll");
-        if (cameraShake != null)
-            cameraShake.Shake(rollShakeDuration, rollShakeStrength);
-
+        if (cam != null)
+            cam.Shake(rollShakeDuration, rollShakeStrength);
 
         float t = 0f;
         while (t < rollDuration)
