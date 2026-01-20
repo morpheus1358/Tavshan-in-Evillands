@@ -10,10 +10,23 @@ public class TopDownCharacterController : MonoBehaviour
     public float rotationSpeed = 10f;
     public float jumpForce = 6f;
 
+    [Header("Roll")]
+    public KeyCode rollKey = KeyCode.LeftShift;
+    public float rollDuration = 0.55f;
+    public float rollSpeed = 9f;
+    public float rollCooldown = 0.6f;
+    public string rollAnimName = "Roll"; // <-- Animator state name
+
+
     [Header("Refs")]
     public Camera mainCamera;
     public LayerMask groundLayer;
     public GameObject SwordActive, NoActiveSword;
+
+    [Header("Camera Shake")]
+    public CameraShake cameraShake;
+    public float rollShakeDuration = 0.18f;
+    public float rollShakeStrength = 0.15f;
 
     [Header("Camera Lock-On")]
     public FixedTopDownCamera cameraLock;
@@ -45,6 +58,10 @@ public class TopDownCharacterController : MonoBehaviour
     bool isJumping = false;
     bool isAttacking = false;
 
+    bool isRolling = false;
+    float rollCooldownTimer = 0f;
+
+
     bool isInFocus = false;
     float focusTimer = 0f;
 
@@ -63,6 +80,10 @@ public class TopDownCharacterController : MonoBehaviour
         if (mainCamera == null) mainCamera = Camera.main;
 
         SetSwordVisual(false);
+
+        if (cameraShake == null && mainCamera != null)
+            cameraShake = mainCamera.GetComponent<CameraShake>();
+
     }
 
     void Update()
@@ -77,8 +98,9 @@ public class TopDownCharacterController : MonoBehaviour
         }
 
         // Lock-on açıkken karakteri hedefe çevir (sadece Y rotasyon)
-        if (isLockedOn && lockedTarget != null)
+        if (isLockedOn && lockedTarget != null && !isRolling)
             RotateYawTowardsTarget(lockedTarget);
+
 
         // Hedef uzaklaştıysa bırak
         if (isLockedOn && autoUnlockIfOutOfRange)
@@ -118,7 +140,7 @@ public class TopDownCharacterController : MonoBehaviour
             StartCoroutine(JumpRoutine());
 
         // Locomotion (attack/jump yokken)
-        if (!isAttacking && !isJumping)
+        if (!isAttacking && !isJumping && !isRolling)
             UpdateLocomotionAnimation();
 
         // Rotate: lock-on kapalıyken serbest dönüş
@@ -127,12 +149,21 @@ public class TopDownCharacterController : MonoBehaviour
             if (lookMode == LookMode.Mouse) RotateTowardsMouse();
             else if (lookMode == LookMode.MoveDirection) RotateTowardsMoveDirection();
         }
+
+        // Roll
+        // Roll cooldown timer
+        if (rollCooldownTimer > 0f)
+            rollCooldownTimer -= Time.deltaTime;
+
+        // Roll input
+        if (Input.GetKeyDown(rollKey))
+            TryRoll();
     }
 
     void FixedUpdate()
     {
-        // Saldırı anında hareket yok
-        if (isAttacking) return;
+        // Saldırı VEYA Roll anında hareket yok
+        if (isAttacking || isRolling) return;
 
         rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime);
     }
@@ -341,6 +372,50 @@ public class TopDownCharacterController : MonoBehaviour
         if (!isAttacking)
             UpdateLocomotionAnimation();
     }
+
+
+    void TryRoll()
+    {
+        if (isRolling) return;
+        if (isAttacking || isJumping) return;
+        if (rollCooldownTimer > 0f) return;
+
+        StartCoroutine(RollRoutine());
+    }
+
+    // -------------------- ROLL --------------------
+    IEnumerator RollRoutine()
+    {
+        isRolling = true;
+        rollCooldownTimer = rollCooldown;
+
+        Vector3 rollDir = transform.forward;
+        rollDir.y = 0f;
+        rollDir.Normalize();
+
+        rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        rb.angularVelocity = Vector3.zero;
+
+        Play("Roll");
+        if (cameraShake != null)
+            cameraShake.Shake(rollShakeDuration, rollShakeStrength);
+
+
+        float t = 0f;
+        while (t < rollDuration)
+        {
+            rb.MovePosition(rb.position + rollDir * rollSpeed * Time.fixedDeltaTime);
+            t += Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+
+        isRolling = false;
+
+        if (!isAttacking && !isJumping)
+            UpdateLocomotionAnimation();
+    }
+
+
 
     // -------------------- LOCOMOTION --------------------
 

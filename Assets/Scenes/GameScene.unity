@@ -1770,6 +1770,11 @@ MonoBehaviour:
   moveSpeed: 24
   rotationSpeed: 10
   jumpForce: 25
+  rollKey: 304
+  rollDuration: 1
+  rollSpeed: 24
+  rollCooldown: 1
+  rollAnimName: Roll
   mainCamera: {fileID: 1424186259}
   groundLayer:
     serializedVersion: 2
