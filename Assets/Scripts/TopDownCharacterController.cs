@@ -20,6 +20,11 @@ public class TopDownCharacterController : MonoBehaviour
     public float rollShakeDuration = 0.15f;
     public float rollShakeStrength = 0.12f;
 
+    [Header("SFX")]
+
+    public AudioSource audioSource;
+    public AudioClip rollSFX, jumpSFX, walkSFX, attackSFX;
+
 
     [Header("Refs")]
     public Camera mainCamera;
@@ -394,6 +399,7 @@ public class TopDownCharacterController : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         Play("Roll");
+        audioSource.PlayOneShot(rollSFX);
         if (cam != null)
             cam.Shake(rollShakeDuration, rollShakeStrength);
 
