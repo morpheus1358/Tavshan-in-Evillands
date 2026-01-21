@@ -1889,6 +1889,12 @@ MonoBehaviour:
   cam: {fileID: 1424186262}
   rollShakeDuration: 0.18
   rollShakeStrength: 0.15
+  maxStamina: 100
+  slash1StaminaCost: 18
+  slash2StaminaCost: 28
+  rollStaminaCost: 25
+  staminaRegenRate: 10
+  staminaRegenDelay: 0.8
   audioSource: {fileID: 1811293496}
   rollSFX: {fileID: 8300000, guid: be5b2b63fbd97bf4e85a46e277427f1f, type: 3}
   jumpSFX: {fileID: 0}

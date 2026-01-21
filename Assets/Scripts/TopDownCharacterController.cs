@@ -20,6 +20,18 @@ public class TopDownCharacterController : MonoBehaviour
     public float rollShakeDuration = 0.15f;
     public float rollShakeStrength = 0.12f;
 
+    [Header("Stamina")]
+    public float maxStamina = 100f;
+
+    public float slash1StaminaCost = 20f;
+    public float slash2StaminaCost = 30f;
+    public float rollStaminaCost = 25f;
+    public float staminaRegenRate = 20f;      // per second
+    public float staminaRegenDelay = 0.8f;    // after last use
+    float currentStamina;
+    float staminaRegenTimer = 0f;
+
+
     [Header("SFX")]
 
     public AudioSource audioSource;
@@ -86,11 +98,15 @@ public class TopDownCharacterController : MonoBehaviour
 
         if (cam == null) cam = FindObjectOfType<FixedTopDownCamera>();
 
+        currentStamina = maxStamina;
+
+
     }
 
     void Update()
     {
         ReadMoveInput();
+        Debug.Log("Stamina: " + Mathf.RoundToInt(currentStamina));
 
         // E ile Lock-on toggle
         if (Input.GetKeyDown(lockOnKey))
@@ -122,6 +138,21 @@ public class TopDownCharacterController : MonoBehaviour
             {
                 comboStep = 0;
                 queuedSlash2 = false;
+            }
+        }
+
+
+        // Stamina regen
+        if (staminaRegenTimer > 0f)
+        {
+            staminaRegenTimer -= Time.deltaTime;
+        }
+        else
+        {
+            if (currentStamina < maxStamina)
+            {
+                currentStamina += staminaRegenRate * Time.deltaTime;
+                currentStamina = Mathf.Min(currentStamina, maxStamina);
             }
         }
 
@@ -288,13 +319,26 @@ public class TopDownCharacterController : MonoBehaviour
 
     void TryAttack()
     {
-        // Attack sırasında 2. vuruşu kuyrukla
+        // Attack sırasında 2. vuruşu kuyrukla (eger stamina yeterliyse)  
         if (isAttacking)
         {
-            if (comboStep == 0)
+            if (comboStep == 0 && currentStamina >= slash2StaminaCost)
                 queuedSlash2 = true;
             return;
         }
+
+        // Decide which attack we are trying to do
+        bool isSlash2Attempt = (comboStep == 1 && comboTimer > 0f);
+        float cost = isSlash2Attempt ? slash2StaminaCost : slash1StaminaCost;
+
+        // Not enough stamina → no attack
+        if (currentStamina < cost)
+            return;
+
+        // Spend stamina
+        currentStamina -= cost;
+        staminaRegenTimer = staminaRegenDelay;
+
 
         // Her vuruşta focus aç/süre tazele
         EnterFocusForAWhile();
@@ -381,12 +425,16 @@ public class TopDownCharacterController : MonoBehaviour
 
     void TryRoll()
     {
-        if (isRolling) return;
-        if (isAttacking || isJumping) return;
+        if (isRolling || isAttacking || isJumping) return;
         if (rollCooldownTimer > 0f) return;
+        if (currentStamina < rollStaminaCost) return;
+
+        currentStamina -= rollStaminaCost;
+        staminaRegenTimer = staminaRegenDelay;
 
         StartCoroutine(RollRoutine());
     }
+
 
     // -------------------- ROLL --------------------
     IEnumerator RollRoutine()
