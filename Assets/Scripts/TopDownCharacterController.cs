@@ -10,6 +10,14 @@ public class TopDownCharacterController : MonoBehaviour
     public float rotationSpeed = 10f;
     public float jumpForce = 6f;
 
+    [Header("Roll I-Frames")]
+    public float iFrameStart = 0.05f;   // seconds after roll starts
+    public float iFrameDuration = 0.25f;
+    public bool IsInvincible { get; private set; } = false;
+
+    Coroutine iFrameCo;
+
+
     [Header("Roll")]
     public KeyCode rollKey = KeyCode.LeftShift;
     public float rollDuration = 0.55f;
@@ -106,7 +114,6 @@ public class TopDownCharacterController : MonoBehaviour
     void Update()
     {
         ReadMoveInput();
-        Debug.Log("Stamina: " + Mathf.RoundToInt(currentStamina));
 
         // E ile Lock-on toggle
         if (Input.GetKeyDown(lockOnKey))
@@ -199,6 +206,20 @@ public class TopDownCharacterController : MonoBehaviour
         if (isAttacking || isRolling) return;
 
         rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime);
+    }
+
+    void SetInvincible(bool value)
+    {
+        IsInvincible = value;
+    }
+
+    IEnumerator RollIFramesRoutine()
+    {
+        SetInvincible(false);
+        yield return new WaitForSeconds(iFrameStart);
+        SetInvincible(true);
+        yield return new WaitForSeconds(iFrameDuration);
+        SetInvincible(false);
     }
 
     void ReadMoveInput()
@@ -346,13 +367,13 @@ public class TopDownCharacterController : MonoBehaviour
         if (comboStep == 1 && comboTimer > 0f)
         {
             StopCoroutine(nameof(AttackRoutine));
-            audioSource.PlayOneShot(attackSFX2);
+            if (audioSource && attackSFX2) audioSource.PlayOneShot(attackSFX2);
             StartCoroutine(AttackRoutine("Slash2", slash2Duration, endsCombo: true));
         }
         else
         {
             StopCoroutine(nameof(AttackRoutine));
-            audioSource.PlayOneShot(attackSFX1);
+            if (audioSource && attackSFX1) audioSource.PlayOneShot(attackSFX1);
             StartCoroutine(AttackRoutine("Slash", slash1Duration, endsCombo: false));
         }
     }
@@ -450,7 +471,9 @@ public class TopDownCharacterController : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         Play("Roll");
-        audioSource.PlayOneShot(rollSFX);
+        if (iFrameCo != null) StopCoroutine(iFrameCo);
+        iFrameCo = StartCoroutine(RollIFramesRoutine());
+        if (audioSource && rollSFX) audioSource.PlayOneShot(rollSFX);
         if (cam != null)
             cam.Shake(rollShakeDuration, rollShakeStrength);
 
@@ -466,8 +489,8 @@ public class TopDownCharacterController : MonoBehaviour
 
         if (!isAttacking && !isJumping)
             UpdateLocomotionAnimation();
+        SetInvincible(false);
     }
-
 
 
     // -------------------- LOCOMOTION --------------------
