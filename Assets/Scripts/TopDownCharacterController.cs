@@ -88,6 +88,8 @@ public class TopDownCharacterController : MonoBehaviour
     bool isInFocus = false;
     float focusTimer = 0f;
 
+    public bool IsDead { get; private set; } = false;
+
     // Combo
     int comboStep = 0;            // 0: Slash, 1: Slash2 hazır
     float comboTimer = 0f;        // Slash2 penceresi
@@ -113,6 +115,7 @@ public class TopDownCharacterController : MonoBehaviour
 
     void Update()
     {
+        if (IsDead) return;
         ReadMoveInput();
 
         // E ile Lock-on toggle
@@ -211,6 +214,15 @@ public class TopDownCharacterController : MonoBehaviour
     void SetInvincible(bool value)
     {
         IsInvincible = value;
+    }
+
+    public void SetDead()
+    {
+        IsDead = true;
+        isAttacking = false;
+        isRolling = false;
+        isJumping = false;
+        SetInvincible(false);
     }
 
     IEnumerator RollIFramesRoutine()
@@ -556,6 +568,7 @@ public class TopDownCharacterController : MonoBehaviour
 
     void Play(string animName)
     {
+        if (IsDead) return;          // ✅ prevents Idle/Run/etc from overriding Death
         if (currentAnimation == animName) return;
         animator.CrossFade(animName, 0.1f);
         currentAnimation = animName;
